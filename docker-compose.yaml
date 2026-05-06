@@ -1,0 +1,38 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+  api:
+    build: ./api
+    container_name: api
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USERNAME=user
+      - DB_PASSWORD=password
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: task_postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=task_tracker
+    volumes:
+      - pg_data:/var/lib/postgresql/data 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d task_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:
