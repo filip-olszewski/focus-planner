@@ -5,11 +5,13 @@ import io.github.filipolszewski.tasktracker.controller.dto.CreateTagRequest;
 import io.github.filipolszewski.tasktracker.controller.dto.TagResponse;
 import io.github.filipolszewski.tasktracker.domain.Tag;
 import io.github.filipolszewski.tasktracker.domain.User;
+import io.github.filipolszewski.tasktracker.domain.exception.UserNotFoundException;
 import io.github.filipolszewski.tasktracker.repository.mapper.TagMapper;
 import io.github.filipolszewski.tasktracker.repository.TagRepository;
 import io.github.filipolszewski.tasktracker.repository.UserRepository;
 import io.github.filipolszewski.tasktracker.repository.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +29,14 @@ public class TagService {
     private final TagMapper tagMapper;
     private final Slugify slugify;
 
-    private User getMockUser() {
-        return userRepository.findAll().stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No mock user found! Did the seeder run?"));
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
     }
 
     public List<TagResponse> getAllTags() {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         return tagRepository.findAllByUser(user)
                 .stream()
@@ -44,7 +46,7 @@ public class TagService {
 
     @Transactional
     public TagResponse createTag(CreateTagRequest request) {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         // Using Slugify instead of manual regex
         String slug = slugify.slugify(request.value());
@@ -64,7 +66,7 @@ public class TagService {
 
     @Transactional
     public void deleteTag(UUID tagId) {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));

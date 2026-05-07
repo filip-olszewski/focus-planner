@@ -50,10 +50,10 @@ export default function CalendarGrid({ tasks, currentDate, onDateChange, onTaskC
     const now = Date.now();
     if (now - scrollTimeoutRef.current < 350) return; 
 
-    if (e.deltaY < -15) {
+    if (e.deltaY > 15) {
       nextMonth();
       scrollTimeoutRef.current = now;
-    } else if (e.deltaY > 15) {
+    } else if (e.deltaY < -15) {
       prevMonth();
       scrollTimeoutRef.current = now;
     }

@@ -13,8 +13,14 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_USERNAME=user
-      - DB_PASSWORD=password
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME}
+      - RSA_PRIVATE_KEY=file:/app/certs/private.pem
+      - RSA_PUBLIC_KEY=file:/app/certs/public.pem
+    volumes:
+      - ./api/certs:/app/certs:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -23,13 +29,13 @@ services:
     image: postgres:16-alpine
     container_name: task_postgres
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=task_tracker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pg_data:/var/lib/postgresql/data 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d task_tracker"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5

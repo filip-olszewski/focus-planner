@@ -6,12 +6,14 @@ import io.github.filipolszewski.tasktracker.controller.dto.UpdateTaskRequest;
 import io.github.filipolszewski.tasktracker.domain.Tag;
 import io.github.filipolszewski.tasktracker.domain.Task;
 import io.github.filipolszewski.tasktracker.domain.User;
+import io.github.filipolszewski.tasktracker.domain.exception.UserNotFoundException;
 import io.github.filipolszewski.tasktracker.repository.TagRepository;
 import io.github.filipolszewski.tasktracker.repository.TaskRepository;
 import io.github.filipolszewski.tasktracker.repository.UserRepository;
 import io.github.filipolszewski.tasktracker.repository.mapper.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,15 +34,15 @@ public class TaskService {
     private final TaskMapper taskMapper;
 
     // Helper method to keep code DRY
-    private User getMockUser() {
-        return userRepository.findAll().stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No mock user found! Did the seeder run?"));
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException(email));
     }
 
     @Transactional
     public UUID createTask(CreateTaskRequest request) {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         Task task = taskMapper.toEntity(request, user);
         task.setIsCompleted(false);
@@ -55,7 +57,7 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksInRange(Instant startDate, Instant endDate, List<UUID> tags) {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         boolean filterByTags = tags != null && !tags.isEmpty();
         List<UUID> safeTags = filterByTags ? tags : List.of(UUID.randomUUID());
@@ -66,8 +68,8 @@ public class TaskService {
     }
 
     public List<TaskResponse> getUpcomingTasks(int limit) {
-        User user = getMockUser();
-        return taskRepository.findUpcoming(user, Instant.now(), Limit.of(limit))
+        User user = getCurrentUser();
+        return taskRepository.findUpcoming(user, Instant.now(), Limit.of(Math.min(limit, 32)))
                 .stream()
                 .map(taskMapper::toResponse)
                 .toList();
@@ -75,7 +77,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse updateTask(UUID id, UpdateTaskRequest request) {
-        User user = getMockUser();
+        User user = getCurrentUser();
 
         Task task = taskRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
@@ -102,7 +104,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse completeTask(UUID id) {
-        User user = getMockUser();
+        User user = getCurrentUser();
         Task task = taskRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
@@ -112,7 +114,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse uncompleteTask(UUID id) {
-        User user = getMockUser();
+        User user = getCurrentUser();
         Task task = taskRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
@@ -122,7 +124,7 @@ public class TaskService {
 
     @Transactional
     public void deleteTask(UUID id) {
-        User user = getMockUser();
+        User user = getCurrentUser();
         Task task = taskRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
