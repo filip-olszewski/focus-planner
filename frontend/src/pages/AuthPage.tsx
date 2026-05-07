@@ -53,8 +53,7 @@ export default function AuthPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Task Tracker</h1>
-          <p className="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-1">Fibonacci Edition</p>
+          <h1 className="text-2xl font-bold text-white">Focus Planner</h1>
         </div>
 
         <h2 className="text-xl font-bold mb-6 text-center">
